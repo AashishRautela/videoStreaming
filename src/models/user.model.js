@@ -6,7 +6,7 @@ const jwt=require("jsonwebtoken");
 require("dotenv").config({ path: "config.env" });
 
 const userSchema=new mongoose.Schema({
-    username:{
+    userName:{
         type:String,
         required:true,
         unique:true,
@@ -72,14 +72,14 @@ userSchema.methods.validatePassword=async function(password){
 
 userSchema.methods.generateAccessToken=async function(){
     return await jwt.sign({
-        _id:this_id,
+        _id:this?._id,
     },
     process.env.JWT_KEY)
 }
 
 userSchema.methods.generateRefreshToken=async function(){
     return await jwt.sign({
-        _id:this_id,
+        _id:this?._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {

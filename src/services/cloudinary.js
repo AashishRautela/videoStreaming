@@ -1,5 +1,6 @@
 const { v2 : cloudinary }=require('cloudinary');
 require("dotenv").config({ path: "config.env" });
+const fs =require("fs")
 
 
 cloudinary.config({
@@ -10,12 +11,20 @@ cloudinary.config({
 
 
 //upload file  
-const uploadResult = await cloudinary.uploader
-.upload(
-    'https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg', {
-        public_id: 'shoes',
+const updloadFile=async (filePath)=>{
+    try{
+        if(!filePath) return null;
+        const fileUrl=await cloudinary.uploader
+        .upload(filePath,
+            {
+                resource_type:"auto"
+            }) 
+        return fileUrl;    
     }
-)
-.catch((error) => {
-    console.log(error);
-});
+    catch(error){
+            fs.unlinkSync(filePath);
+            return null;
+    }
+}
+
+module.exports={updloadFile}
