@@ -19,6 +19,7 @@ const updloadFile=async (filePath)=>{
             {
                 resource_type:"auto"
             }) 
+        fs.unlinkSync(filePath);
         return fileUrl;    
     }
     catch(error){

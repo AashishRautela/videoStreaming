@@ -13,12 +13,14 @@ const userSchema=new mongoose.Schema({
         trim:true,
         lowercase:true,
         index:true,
+        maxLength:15
     },
     email:{
         type:String,
         unique:true,
         trim:true,
         lowercase:true,
+        maxLength:50,
         validate(value){
             if(!validator.isEmail(value)){
                 const error=new Error("Please Enter a valid Email");
@@ -31,7 +33,8 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true,
         trim:true,
-        index:true
+        index:true,
+        maxLength:30
     },
     avatar:{
         type:String
