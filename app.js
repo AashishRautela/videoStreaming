@@ -14,10 +14,14 @@ app.use(express.static("public"))
 
 //import routes
 const userRouter=require("./src/routes/user.routes");
+const channelRouter=require("./src/routes/channel.routes");
+const videoRouter=require("./src/routes/video.routes");
 
 
 //use routes
-app.use("/api/v1/user",userRouter)
+app.use("/api/v1/user",userRouter);
+app.use("/api/v1/channel",channelRouter);
+app.use("/api/v1/video",videoRouter);
 
 app.get("/:username",async (req,res)=>{
     console.log('req', req)

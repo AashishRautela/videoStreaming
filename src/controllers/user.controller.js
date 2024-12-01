@@ -5,6 +5,7 @@ const { uploadFile } = require("../services/cloudinary");
 const { upload } = require("../middlewares/multer.middleware.js");
 const validator = require("validator");
 
+
 const generateTokens = async (user, res) => {
     try {
         const accessToken = await user.generateAccessToken();
@@ -264,9 +265,25 @@ module.exports.userProfile = asyncHandler(async (req, res, next) => {
     
     return res.status(200).send({
         success: true,
-        data: channel,
+        data: channel[0],
         message:"User data fetched"
     });
 });
+
+// module.exports.userWatchHistory=asyncHandler(async (req,res,next)=>{
+//     const user=req.user;
+
+//     const watchHistoryIds=user.watchHistory;
+
+//     await Video.aggregate([
+//         {
+//             $match:{
+//                 _id:watchHistoryIds.
+//             }
+//         }
+//     ])
+
+
+// })
 
 

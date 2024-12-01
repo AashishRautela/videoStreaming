@@ -7,7 +7,7 @@ const videoSchema=new mongoose.Schema({
     },
     thumbnail:{
         type:String,
-        required:true
+        // required:true
     },
     title:{
         type:String,
