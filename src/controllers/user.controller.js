@@ -1,87 +1,87 @@
-const User =require("../models/user.model.js");
-const {asyncHandler}=require("../utils/asyncHandler");
-const {validateUser}=require("../utils/validateUser.js");
-const {uploadFile}=require("../services/cloudinary");
+const User = require("../models/user.model.js");
+const { asyncHandler } = require("../utils/asyncHandler");
+const { validateUser } = require("../utils/validateUser.js");
+const { uploadFile } = require("../services/cloudinary");
 const { upload } = require("../middlewares/multer.middleware.js");
-const validator=require("validator");
+const validator = require("validator");
 
-const generateTokens=async (user,res)=>{
+const generateTokens = async (user, res) => {
     try {
-        const accessToken=await user.generateAccessToken();
-        const refreshToken=await user.generateRefreshToken();
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
 
-        user.refreshToken=refreshToken;
+        user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
-        return {accessToken,refreshToken}
+        return { accessToken, refreshToken }
 
     } catch (error) {
         res.status(500).send({
-            success:false,
-            message:"Something went wrong"
+            success: false,
+            message: "Something went wrong"
         })
     }
 }
 
 
-module.exports.registerUser=asyncHandler(async (req,res,next)=>{
-    validateUser(req,res);
-    const {userName,email,fullName,password}=req.body;
-    
-    const files=req.files
-    const userAvatar=files?.avatar;
-    const userCoverImage=files?.coverImage || "";
-    if(!userAvatar){
-        const error=new Error("Request data missing");
-        error.statusCode=400;
+module.exports.registerUser = asyncHandler(async (req, res, next) => {
+    validateUser(req, res);
+    const { userName, email, fullName, password } = req.body;
+
+    const files = req.files
+    const userAvatar = files?.avatar;
+    const userCoverImage = files?.coverImage || "";
+    if (!userAvatar) {
+        const error = new Error("Request data missing");
+        error.statusCode = 400;
         throw error;
     }
 
-    const avatar=await uploadFile(userAvatar[0]?.path);
-    const coverImage=await uploadFile(userCoverImage[0]?.path || "");
-    const user =new User({
+    const avatar = await uploadFile(userAvatar[0]?.path);
+    const coverImage = await uploadFile(userCoverImage[0]?.path || "");
+    const user = new User({
         userName,
         email,
         fullName,
         password,
-        avatar:avatar?.url,
-        coverImage:coverImage?.url || ""
+        avatar: avatar?.url,
+        coverImage: coverImage?.url || ""
     }
     )
     await user.save()
     res.status(200).json({
-        success:true,
-        message:"User Registered Successfully"
+        success: true,
+        message: "User Registered Successfully"
     })
 })
 
-module.exports.logIn=asyncHandler(async (req,res,next)=>{
-    const {email,password}=req.body;
+module.exports.logIn = asyncHandler(async (req, res, next) => {
+    const { email, password } = req.body;
 
-    if(!email || !password){
+    if (!email || !password) {
         return res.status(404).json({
-            success:false,
-            message:"Request data missing"
+            success: false,
+            message: "Request data missing"
         })
     }
 
-    if(!validator.isEmail(email)){
+    if (!validator.isEmail(email)) {
         return res.status(400).json({
-            success:false,
-            message:"Enter a valid email"
+            success: false,
+            message: "Enter a valid email"
         })
     }
 
-    const user=await User.findOne({email});
-    if(!user){
+    const user = await User.findOne({ email });
+    if (!user) {
         return res.status(400).json({
-            success:false,
-            message:"Email or password is incorrect"
+            success: false,
+            message: "Email or password is incorrect"
         })
     }
 
-    const isPasswordValid=await user.validatePassword(password);
-    if(isPasswordValid){
-        const {accessToken,refreshToken}=await generateTokens(user,res);
+    const isPasswordValid = await user.validatePassword(password);
+    if (isPasswordValid) {
+        const { accessToken, refreshToken } = await generateTokens(user, res);
         res
             .cookie("token", accessToken)
             .cookie("refreshToken", refreshToken)
@@ -91,65 +91,64 @@ module.exports.logIn=asyncHandler(async (req,res,next)=>{
                 message: "User logged in successfully",
             });
     }
-    else{
+    else {
         return res.status(401).json({
-            success:false,
-            message:"Email or password is incorrect"
+            success: false,
+            message: "Email or password is incorrect"
         })
     }
 })
 
-module.exports.logOut=asyncHandler(async (req,res,next)=>{
-        const user=req.user;
-        await User.findByIdAndUpdate(user?._id,{refreshToken:""});
-        res
+module.exports.logOut = asyncHandler(async (req, res, next) => {
+    const user = req.user;
+    await User.findByIdAndUpdate(user?._id, { refreshToken: "" });
+    res
         .clearCookie("token")
         .clearCookie("refreshToken")
         .status(200)
         .json({
-            success:true,
-            message:"User logged out"
+            success: true,
+            message: "User logged out"
         })
 })
 
-module.exports.changePassword=asyncHandler(async (req,res,next)=>{
-    const {newPassword,oldPassword}=req.body;
-    const user=req.user;
+module.exports.changePassword = asyncHandler(async (req, res, next) => {
+    const { newPassword, oldPassword } = req.body;
+    const user = req.user;
 
-    const validatedUser=await User.findById(user._id);
+    const validatedUser = await User.findById(user._id);
 
-    const isPasswordValid=await validatedUser.validatePassword(oldPassword);
+    const isPasswordValid = await validatedUser.validatePassword(oldPassword);
 
-    if(!isPasswordValid){
+    if (!isPasswordValid) {
         return res.status(400).send({
-            success:false,
-            message:"Password is not correct"
+            success: false,
+            message: "Password is not correct"
         })
     }
-    user.password=newPassword;
-    const data =await user.save({validateBeforeSave:false});
-    if(data){
+    user.password = newPassword;
+    const data = await user.save({ validateBeforeSave: false });
+    if (data) {
         return res.status(200).send({
-            success:false,
-            message:"Password changed succefully"
+            success: false,
+            message: "Password changed succefully"
         })
     }
-    else{
+    else {
         return res.status(500).send({
-            success:false,
-            message:"Error while updating password"
+            success: false,
+            message: "Error while updating password"
         })
     }
 })
 
-module.exports.getCurrUser=asyncHandler(async (req,res,next)=>{
+module.exports.getCurrUser = asyncHandler(async (req, res, next) => {
     return res.status(200).send({
-        success:true,
-        data:req.user,
-        message:"user fetched"
+        success: true,
+        data: req.user,
+        message: "user fetched"
     })
 })
-
 
 //this is i written for avatar and cover image..remaining fileds will will similar like this
 module.exports.updateUser = asyncHandler(async (req, res, next) => {
@@ -196,3 +195,78 @@ module.exports.updateUser = asyncHandler(async (req, res, next) => {
         });
     }
 });
+
+module.exports.userProfile = asyncHandler(async (req, res, next) => {
+    const { userName } = req.params;
+
+    if (!userName?.trim()) {
+        return res.status(400).send({
+            success: false,
+            message: "Request Data missing",
+        });
+    }
+
+    const user = await User.findOne({ "userName": userName });
+
+    if (!user) {
+        return res.status(404).send({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match:
+                { userName: userName }
+        },
+        {
+            $lookup:{
+                from:"subscriptions",
+                localField:"_id",
+                foreignField:"channel",
+                as:"subscribers"
+            }
+        },
+        {
+            $lookup:{
+                from:"subscriptions",
+                localField:"_id",
+                foreignField:"subscriber",
+                as:"subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                totalSubscribers: { $size: "$subscribers" },
+                totalSubscribedTo: { $size: "$subscribedTo" },
+                isSubscribed:{
+                    $cond:{
+                        if:{$in :[req.user?._id,"$subscribers.subscriber"]},
+                        then :true,
+                        else:false
+                    }
+                }
+            }
+        },
+        {
+            $project:{
+                userName:1,
+                fullName:1,
+                avatar:1,
+                totalSubscribers:1,
+                totalSubscribedTo:1,
+                isSubscribed:1,
+                coverImage:1
+            }
+        }
+    ]);
+    
+    return res.status(200).send({
+        success: true,
+        data: channel,
+        message:"User data fetched"
+    });
+});
+
+

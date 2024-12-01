@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { registerUser, logIn, logOut, changePassword, getCurrUser, updateUser } = require("../controllers/user.controller");
+const { registerUser, logIn, logOut, changePassword, getCurrUser, updateUser ,userProfile} = require("../controllers/user.controller");
 const { storage, upload } = require("../middlewares/multer.middleware");
 const { userAuth } = require("../middlewares/auth.middleware");
 router.post("/register",
@@ -34,6 +34,7 @@ router.patch("/update", userAuth,
     ]),
     updateUser
 )
+router.get("/profile/:userName",userAuth,userProfile)
 
 
 module.exports = router;

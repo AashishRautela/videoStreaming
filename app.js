@@ -1,6 +1,7 @@
 const express=require("express");
 const cookieParser=require("cookie-parser")
 const app=express();
+const User=require("./src/models/user.model")
 
 
 //middlewares
@@ -18,8 +19,13 @@ const userRouter=require("./src/routes/user.routes");
 //use routes
 app.use("/api/v1/user",userRouter)
 
-app.get("/",(req,res)=>{
-    res.send("yes")
+app.get("/:username",async (req,res)=>{
+    console.log('req', req)
+    const username=req.params.username;
+    console.log('username', username)
+    const user=await User.find({email:username.trim().toLowerCase()})
+    console.log('user', user)
+    res.send(user)
 })
 
 module.exports={app}
