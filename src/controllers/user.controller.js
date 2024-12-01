@@ -4,6 +4,7 @@ const { validateUser } = require("../utils/validateUser.js");
 const { uploadFile } = require("../services/cloudinary");
 const { upload } = require("../middlewares/multer.middleware.js");
 const validator = require("validator");
+const { default: mongoose } = require("mongoose");
 
 
 const generateTokens = async (user, res) => {
@@ -49,7 +50,7 @@ module.exports.registerUser = asyncHandler(async (req, res, next) => {
     }
     )
     await user.save()
-    res.status(200).json({
+    return res.status(200).json({
         success: true,
         message: "User Registered Successfully"
     })
@@ -270,20 +271,55 @@ module.exports.userProfile = asyncHandler(async (req, res, next) => {
     });
 });
 
-// module.exports.userWatchHistory=asyncHandler(async (req,res,next)=>{
-//     const user=req.user;
+module.exports.watchHistory=asyncHandler(async (req,res,next)=>{
+    const watchHistory=await User.aggregate([
+        {
+            $match:{
+                _id:new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                    fullName:1,
+                                    userName:1,
+                                    avatar:1
+                                }
+                            }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $first:"$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
 
-//     const watchHistoryIds=user.watchHistory;
+    return res.status(200).send({
+        success:true,
+        data:watchHistory[0]?.watchHistory,
+        message:"Watch History fetched"
+    })
+})
 
-//     await Video.aggregate([
-//         {
-//             $match:{
-//                 _id:watchHistoryIds.
-//             }
-//         }
-//     ])
-
-
-// })
 
 
