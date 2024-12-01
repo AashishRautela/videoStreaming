@@ -11,7 +11,7 @@ cloudinary.config({
 
 
 //upload file  
-const updloadFile=async (filePath)=>{
+const uploadFile=async (filePath)=>{
     try{
         if(!filePath) return null;
         const fileUrl=await cloudinary.uploader
@@ -28,4 +28,4 @@ const updloadFile=async (filePath)=>{
     }
 }
 
-module.exports={updloadFile}
+module.exports={uploadFile}

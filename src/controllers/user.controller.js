@@ -1,7 +1,7 @@
 const User =require("../models/user.model.js");
 const {asyncHandler}=require("../utils/asyncHandler");
 const {validateUser}=require("../utils/validateUser.js");
-const {updloadFile}=require("../services/cloudinary");
+const {uploadFile}=require("../services/cloudinary");
 const { upload } = require("../middlewares/multer.middleware.js");
 const validator=require("validator");
 
@@ -36,8 +36,8 @@ module.exports.registerUser=asyncHandler(async (req,res,next)=>{
         throw error;
     }
 
-    const avatar=await updloadFile(userAvatar[0]?.path);
-    const coverImage=await updloadFile(userCoverImage[0]?.path || "");
+    const avatar=await uploadFile(userAvatar[0]?.path);
+    const coverImage=await uploadFile(userCoverImage[0]?.path || "");
     const user =new User({
         userName,
         email,
@@ -111,3 +111,88 @@ module.exports.logOut=asyncHandler(async (req,res,next)=>{
             message:"User logged out"
         })
 })
+
+module.exports.changePassword=asyncHandler(async (req,res,next)=>{
+    const {newPassword,oldPassword}=req.body;
+    const user=req.user;
+
+    const validatedUser=await User.findById(user._id);
+
+    const isPasswordValid=await validatedUser.validatePassword(oldPassword);
+
+    if(!isPasswordValid){
+        return res.status(400).send({
+            success:false,
+            message:"Password is not correct"
+        })
+    }
+    user.password=newPassword;
+    const data =await user.save({validateBeforeSave:false});
+    if(data){
+        return res.status(200).send({
+            success:false,
+            message:"Password changed succefully"
+        })
+    }
+    else{
+        return res.status(500).send({
+            success:false,
+            message:"Error while updating password"
+        })
+    }
+})
+
+module.exports.getCurrUser=asyncHandler(async (req,res,next)=>{
+    return res.status(200).send({
+        success:true,
+        data:req.user,
+        message:"user fetched"
+    })
+})
+
+
+//this is i written for avatar and cover image..remaining fileds will will similar like this
+module.exports.updateUser = asyncHandler(async (req, res, next) => {
+    const files = req.files;
+    const userAvatar = files?.avatar || "";
+    const userCoverImage = files?.coverImage || "";
+
+    let avatar = null;
+    let cover = null;
+
+    if (userAvatar) {
+        const uploadedAvatar = await uploadFile(userAvatar[0]?.path);
+        avatar = uploadedAvatar?.url;
+    }
+
+    if (userCoverImage) {
+        const uploadedCover = await uploadFile(userCoverImage[0]?.path);
+        cover = uploadedCover?.url;
+    }
+
+    const userId = req.user?._id;
+
+    const update = {};
+    if (avatar) update.avatar = avatar;
+    if (cover) update.coverImage = cover;
+
+    const user = await User.findByIdAndUpdate(
+        userId,
+        update,
+        { new: true, runValidators: true }
+    ).select("-password -refreshToken");
+
+    if (user) {
+        return res.status(200).send({
+            success: true,
+            message: "User updated successfully",
+            data: user,
+        });
+    } else {
+        return res.status(404).send({
+            success: false,
+            message: "User not found",
+            data: null,
+        });
+    }
+});
