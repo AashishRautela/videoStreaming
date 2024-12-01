@@ -103,13 +103,11 @@ module.exports.logOut=asyncHandler(async (req,res,next)=>{
         const user=req.user;
         await User.findByIdAndUpdate(user?._id,{refreshToken:""});
         res
-        .cookie("token",null)
-        .cookie("refreshToken",null)
+        .clearCookie("token")
+        .clearCookie("refreshToken")
         .status(200)
         .json({
             success:true,
             message:"User logged out"
         })
-
-
 })
