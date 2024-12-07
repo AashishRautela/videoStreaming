@@ -34,7 +34,6 @@ router.patch("/update", userAuth,
     ]),
     updateUser
 )
-router.get("/profile/:userName",userAuth,userProfile)
 router.get("/watchHistory",userAuth,watchHistory)
 
 
