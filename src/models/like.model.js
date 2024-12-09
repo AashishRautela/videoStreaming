@@ -1,4 +1,6 @@
 const mongoose =require("mongoose");
+const mongooseAgregatePaginate=require("mongoose-aggregate-paginate-v2");
+
 
 const likeSchema=new mongoose
 .Schema({
@@ -13,5 +15,7 @@ const likeSchema=new mongoose
         ref:"Video"
     }
 },{timestamps:true})
+
+likeSchema.plugin(mongooseAgregatePaginate);
 
 module.exports=mongoose.model("Like",likeSchema);

@@ -1,4 +1,6 @@
 const mongoose =require("mongoose");
+const mongooseAgregatePaginate=require("mongoose-aggregate-paginate-v2");
+
 
 const playListSchema=new mongoose.Schema({
     name:{
@@ -20,5 +22,7 @@ const playListSchema=new mongoose.Schema({
         ref:"Video"
     }]
 },{timestamps:true})
+
+playListSchema.plugin(mongooseAgregatePaginate);
 
 module.exports=mongoose.model("Playlist",playListSchema);

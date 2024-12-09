@@ -5,6 +5,7 @@ const { uploadFile } = require("../services/cloudinary");
 const { upload } = require("../middlewares/multer.middleware.js");
 const validator = require("validator");
 const { default: mongoose } = require("mongoose");
+const sendMessageToQueue = require('../rabiitmq/producer');
 
 
 const generateTokens = async (user, res) => {
@@ -30,13 +31,13 @@ module.exports.registerUser = asyncHandler(async (req, res, next) => {
     const { userName, email, fullName, password } = req.body;
 
     const files = req.files
-    const userAvatar = files?.avatar;
+    const userAvatar = files?.avatar || "";
     const userCoverImage = files?.coverImage || "";
-    if (!userAvatar) {
-        const error = new Error("Request data missing");
-        error.statusCode = 400;
-        throw error;
-    }
+    // if (!userAvatar) {
+    //     const error = new Error("Request data missing");
+    //     error.statusCode = 400;
+    //     throw error;
+    // }
 
     const avatar = await uploadFile(userAvatar[0]?.path);
     const coverImage = await uploadFile(userCoverImage[0]?.path || "");
@@ -50,6 +51,10 @@ module.exports.registerUser = asyncHandler(async (req, res, next) => {
     }
     )
     await user.save()
+
+    const message = `User registered: ${userName} with email: ${email}`;
+    await sendMessageToQueue(message);
+
     return res.status(200).json({
         success: true,
         message: "User Registered Successfully"
